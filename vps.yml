@@ -1,0 +1,23 @@
+name: Conectar ao Tailscale e Pegar IP
+
+on: [push]
+
+jobs:
+  tailscale-connect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          ping: 100.123.221.114  # <-- COLOQUE O IP DO SEU COLAB AQUI
+
+      - name: Pegar o IP do Runner
+        run: |
+          echo "O IP Tailscale deste runner do GitHub é:"
+          tailscale ip -4
