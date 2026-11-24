@@ -1,0 +1,25 @@
+name: Servidor SSH via Tailscale
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ssh-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Conectar ao Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TS_AUTHKEY }}
+          # O argumento abaixo é o segredo para habilitar o SSH
+          args: --ssh
+
+      - name: Mostrar IP e Manter Ligado
+        run: |
+          echo "=== SEU IP SSH É: ==="
+          tailscale ip -4
+          echo "====================="
+          echo "Para conectar, use o comando abaixo no seu terminal:"
+          echo "tailscale ssh root@$(tailscale ip -4)"
+          echo "A máquina vai ficar ligada por 6 horas."
+          sleep 21600
