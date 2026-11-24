@@ -1,0 +1,32 @@
+name: Servidor SSH no GitHub Actions
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ssh-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar e Iniciar SSH
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-server
+          sudo mkdir -p /var/run/sshd
+          echo "root:123456" | sudo chpasswd
+          sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo service ssh start
+
+      - name: Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Mostrar IP e Manter Ligado
+        run: |
+          echo "=== SEU IP SSH É: ==="
+          tailscale ip -4
+          echo "====================="
+          echo "A máquina vai ficar ligada por 6 horas. Pode conectar!"
+          sleep 21600
