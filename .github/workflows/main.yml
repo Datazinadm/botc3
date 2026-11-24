@@ -1,4 +1,4 @@
-name: Servidor SSH no GitHub Actions
+name: Servidor SSH com Auth Key
 
 on:
   workflow_dispatch:
@@ -16,12 +16,10 @@ jobs:
           sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
           sudo service ssh start
 
-      - name: Tailscale
+      - name: Tailscale com Auth Key
         uses: tailscale/github-action@v4
         with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci
+          authkey: ${{ secrets.TS_AUTHKEY }}
 
       - name: Mostrar IP e Manter Ligado
         run: |
