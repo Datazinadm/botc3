@@ -1,0 +1,25 @@
+name: Meu Workflow com Tailscale
+
+on: [push]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 1. Conectar à rede Tailscale
+      - name: Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          # Opcional: espera o ping responder antes de seguir
+          ping: 100.x.y.z  # Coloque o IP Tailscale do alvo que você quer acessar
+
+      # 2. Agora seu workflow pode acessar a rede privada
+      - name: Acessar servidor interno
+        run: |
+          ssh root@100.x.y.z "echo 'Conectado com sucesso!'"
