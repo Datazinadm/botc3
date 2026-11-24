@@ -1,0 +1,33 @@
+name: Servidor SSH no GitHub Actions
+
+on:
+  workflow_dispatch: # Isso permite que você clique em "Run workflow" manualmente
+
+jobs:
+  ssh-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instalar e Iniciar SSH
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-server
+          sudo mkdir -p /var/run/sshd
+          # Define a senha do root para "123456" (MUDE ISSO)
+          echo "root:123456" | sudo chpasswd
+          sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo service ssh start
+
+      - name: Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Mostrar IP e Manter Ligado
+        run: |
+          echo "O IP SSH desta máquina é:"
+          tailscale ip -4
+          echo "A máquina vai ficar ligada por 6 horas. Conecte agora!"
+          # O comando abaixo segura a máquina rodando por 6 horas (21600 segundos)
+          sleep 21600
