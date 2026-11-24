@@ -1,13 +1,20 @@
-name: Conectar ao Tailscale e Pegar IP
+name: Servidor SSH no GitHub Actions
 
-on: [push]
+on:
+  workflow_dispatch:
 
 jobs:
-  tailscale-connect:
+  ssh-server:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
+      - name: Instalar e Iniciar SSH
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-server
+          sudo mkdir -p /var/run/sshd
+          echo "root:123456" | sudo chpasswd
+          sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+          sudo service ssh start
 
       - name: Tailscale
         uses: tailscale/github-action@v4
@@ -15,9 +22,11 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-          ping: 100.123.221.114  # <-- COLOQUE O IP DO SEU COLAB AQUI
 
-      - name: Pegar o IP do Runner
+      - name: Mostrar IP e Manter Ligado
         run: |
-          echo "O IP Tailscale deste runner do GitHub é:"
+          echo "=== SEU IP SSH É: ==="
           tailscale ip -4
+          echo "====================="
+          echo "A máquina vai ficar ligada por 6 horas. Pode conectar!"
+          sleep 21600
