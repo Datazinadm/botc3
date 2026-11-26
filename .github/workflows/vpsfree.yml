@@ -1,4 +1,5 @@
-name: Servidor SSH via Tailscale
+
+name: VPS SSH via Tailscale
 
 on:
   workflow_dispatch:
@@ -6,20 +7,48 @@ on:
 jobs:
   ssh-server:
     runs-on: ubuntu-latest
+    timeout-minutes: 360
+
     steps:
+      - name: Preparar servidor SSH
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssh-server
+
+          echo "runner:${VPS_PASSWORD}" | sudo chpasswd
+
+          sudo mkdir -p /etc/ssh/sshd_config.d
+
+          echo "PasswordAuthentication yes" | sudo tee /etc/ssh/sshd_config.d/99-custom.conf
+          echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config.d/99-custom.conf
+
+          sudo systemctl restart ssh
+
+        env:
+          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+
       - name: Conectar ao Tailscale
         uses: tailscale/github-action@v4
         with:
           authkey: ${{ secrets.TS_AUTHKEY }}
-          # O argumento abaixo é o segredo para habilitar o SSH
-          args: --ssh
 
-      - name: Mostrar IP e Manter Ligado
+      - name: Mostrar informações da VPS
         run: |
-          echo "=== SEU IP SSH É: ==="
+          echo "======= VPS ONLINE ======="
+          echo "IP TAILSCALE:"
           tailscale ip -4
-          echo "====================="
-          echo "Para conectar, use o comando abaixo no seu terminal:"
-          echo "tailscale ssh root@$(tailscale ip -4)"
-          echo "A máquina vai ficar ligada por 6 horas."
-          sleep 21600
+
+          echo "======= RECURSOS ======="
+          nproc
+          free -h
+          df -h /
+
+          echo "========================"
+          echo "SSH USER: runner"
+          echo "PASSWORD: ghostc3 (se configurada no secret)"
+          echo "========================"
+
+      - name: Manter VPS ligada
+        run: |
+          echo "VPS iniciada!"
+          sleep 21000
