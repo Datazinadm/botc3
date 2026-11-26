@@ -1,5 +1,5 @@
 
-name: VPS SSH via Tailscale
+name: VPS Root SSH via Tailscale
 
 on:
   workflow_dispatch:
@@ -10,17 +10,20 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: Preparar servidor SSH
+      - name: Preparar VPS com acesso ROOT
         run: |
           sudo apt-get update
           sudo apt-get install -y openssh-server
 
-          echo "runner:${VPS_PASSWORD}" | sudo chpasswd
+          echo "root:${VPS_PASSWORD}" | sudo chpasswd
 
           sudo mkdir -p /etc/ssh/sshd_config.d
 
-          echo "PasswordAuthentication yes" | sudo tee /etc/ssh/sshd_config.d/99-custom.conf
-          echo "PermitRootLogin no" | sudo tee -a /etc/ssh/sshd_config.d/99-custom.conf
+          sudo tee /etc/ssh/sshd_config.d/99-root.conf <<EOF
+          PermitRootLogin yes
+          PasswordAuthentication yes
+          PubkeyAuthentication yes
+          EOF
 
           sudo systemctl restart ssh
 
@@ -32,23 +35,26 @@ jobs:
         with:
           authkey: ${{ secrets.TS_AUTHKEY }}
 
-      - name: Mostrar informações da VPS
+      - name: Informações da VPS
         run: |
-          echo "======= VPS ONLINE ======="
-          echo "IP TAILSCALE:"
+          echo "====== VPS ROOT ONLINE ======"
+          echo "IP:"
           tailscale ip -4
 
-          echo "======= RECURSOS ======="
+          echo "CPU:"
           nproc
+
+          echo "RAM:"
           free -h
+
+          echo "ARMAZENAMENTO:"
           df -h /
 
-          echo "========================"
-          echo "SSH USER: runner"
-          echo "PASSWORD: ghostc3 (se configurada no secret)"
-          echo "========================"
+          echo "USUARIO:"
+          whoami
+
+          echo "============================="
 
       - name: Manter VPS ligada
         run: |
-          echo "VPS iniciada!"
           sleep 21000
